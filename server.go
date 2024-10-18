@@ -25,17 +25,19 @@ func NewServer() *Server {
 }
 
 type Server struct {
-	cond                      *sync.Cond
-	queue                     *glist.List
-	clinet                    *wrpc.Client
-	mutex                     sync.Mutex
-	deviceMap                 map[string]*Device
-	deviceOnlineStatusMap     *gmap.StrIntMap
-	serialNumberToDeviceIdMap *gmap.StrStrMap
-	callDeviceActionHandler   CallDeviceActionHandler
+	cond                       *sync.Cond
+	queue                      *glist.List
+	clinet                     *wrpc.Client
+	mutex                      sync.Mutex
+	deviceMap                  map[string]*Device
+	deviceOnlineStatusMap      *gmap.StrIntMap
+	serialNumberToDeviceIdMap  *gmap.StrStrMap
+	callDeviceActionHandler    CallDeviceActionHandler
+	setDevicePropertiesHandler SetDevicePropertiesHandler
 }
 
 type CallDeviceActionHandler func(ctx context.Context, deviceId string, action string, args map[string]any) (any, error)
+type SetDevicePropertiesHandler func(ctx context.Context, deviceId string, values map[string]any) error
 
 func (s *Server) Run(ctx context.Context, address string) {
 	for {
@@ -55,6 +57,7 @@ func (s *Server) Run(ctx context.Context, address string) {
 			client.MustBind("deviceUpdated", s.onDeviceUpdated)
 			client.MustBind("deviceDeleted", s.onDeviceDeleted)
 			client.MustBind("callDeviceAction", s.onCallDeviceAction)
+			client.MustBind("setDeviceProperties", s.onSetDeviceProperties)
 			s.clinet = client
 			// 启用消息队列
 			go s.messageQueueMain(ctx, client)
@@ -317,6 +320,22 @@ func (s *Server) onCallDeviceAction(ctx context.Context, req *callDeviceActionRe
 
 func (s *Server) SetCallDeviceActionHandler(handler CallDeviceActionHandler) {
 	s.callDeviceActionHandler = handler
+}
+
+type setDevicePropertiesReq struct {
+	DeviceId string         `json:"deviceId"`
+	Values   map[string]any `json:"values"`
+}
+
+func (s *Server) onSetDeviceProperties(ctx context.Context, req *setDevicePropertiesReq) error {
+	if s.setDevicePropertiesHandler == nil {
+		return gerror.New("driver not impl set device properties")
+	}
+	return s.setDevicePropertiesHandler(ctx, req.DeviceId, req.Values)
+}
+
+func (s *Server) SetSetDevicePropertiesHandler(handler SetDevicePropertiesHandler) {
+	s.setDevicePropertiesHandler = handler
 }
 
 func (s *Server) SerialNumberToDeviceId(serialNumber string) string {
