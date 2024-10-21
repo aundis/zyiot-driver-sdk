@@ -22,7 +22,6 @@ func NewServer() *Server {
 		serialNumberToDeviceIdMap:   gmap.NewStrStrMap(true),
 		productNumberToProductIdMap: gmap.NewStrStrMap(true),
 	}
-	server.initWawit.Add(1)
 	return server
 }
 
@@ -73,13 +72,12 @@ func (s *Server) Run(ctx context.Context, address string) {
 			// 拉取设备数据缓存到本地
 			s.initWawit.Add(1)
 			go s.updateCacheDeviceList(ctx, client)
-			// 拉去产品数据缓存到本地
+			// 拉取产品数据缓存到本地
 			s.initWawit.Add(1)
 			go s.initProductListCache(ctx, client)
 			// 同步设备在线状态
+			s.initWawit.Add(1)
 			go s.deviceOnlineStatusPush(ctx)
-			s.initWawit.Done()
-			defer s.initWawit.Add(1)
 			err = client.Start(ctx)
 			if err != nil {
 				// 与服务器断开连接, 5秒后重连
@@ -88,7 +86,6 @@ func (s *Server) Run(ctx context.Context, address string) {
 				return
 			}
 		}()
-		s.initWawit.Add(1)
 	}
 }
 

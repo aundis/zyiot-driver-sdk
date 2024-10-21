@@ -25,6 +25,7 @@ func (s *Server) updateCacheDeviceList(ctx context.Context, client *wrpc.Client)
 }
 
 func (s *Server) deviceOnlineStatusPush(ctx context.Context) {
+	defer s.initWawit.Done()
 	for deviceId, status := range s.deviceOnlineStatusMap.Map() {
 		if status == 1 {
 			s.OnlineDevice(deviceId)
