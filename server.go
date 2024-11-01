@@ -22,6 +22,7 @@ func NewServer() *Server {
 		serialNumberToDeviceIdMap:   gmap.NewStrStrMap(true),
 		productNumberToProductIdMap: gmap.NewStrStrMap(true),
 	}
+	server.initWawit.Add(3)
 	return server
 }
 
@@ -47,6 +48,7 @@ type SetDevicePropertiesHandler func(ctx context.Context, deviceId string, value
 func (s *Server) Run(ctx context.Context, address string) {
 	for {
 		func() {
+			defer s.initWawit.Add(3)
 			conn, _, err := websocket.DefaultDialer.Dial(address, nil)
 			if err != nil {
 				// 连接失败, 5秒后重连
@@ -70,13 +72,10 @@ func (s *Server) Run(ctx context.Context, address string) {
 			// 启用消息队列
 			go s.messageQueueMain(ctx, client)
 			// 拉取设备数据缓存到本地
-			s.initWawit.Add(1)
 			go s.updateCacheDeviceList(ctx, client)
 			// 拉取产品数据缓存到本地
-			s.initWawit.Add(1)
 			go s.initProductListCache(ctx, client)
 			// 同步设备在线状态
-			s.initWawit.Add(1)
 			go s.deviceOnlineStatusPush(ctx)
 			err = client.Start(ctx)
 			if err != nil {
