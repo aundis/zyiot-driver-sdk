@@ -100,6 +100,9 @@ func (s *Server) ReportDeviceProperties(deviceId string, data map[string]any) {
 }
 
 func (s *Server) CreateDevice(ctx context.Context, in CreateDeviceReq) (string, error) {
+	// 等待上线不然 client = nil, 无法请求
+	s.WaitInit()
+
 	res, err := s.clinet.Request(ctx, wrpc.RequestData{
 		Command: "createDevice",
 		Data:    in,
