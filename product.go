@@ -40,7 +40,8 @@ func (s *Server) resetProductListCache(list []ProductFull) {
 	defer s.productMapMutex.Unlock()
 
 	for _, item := range list {
-		s.productMap[item.Id] = &item
+		temp := item
+		s.productMap[item.Id] = &temp
 		s.productNumberToProductIdMap.Set(item.Number, item.Id)
 	}
 }
