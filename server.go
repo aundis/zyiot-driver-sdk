@@ -48,7 +48,6 @@ type SetDevicePropertiesHandler func(ctx context.Context, deviceId string, value
 func (s *Server) Run(ctx context.Context, address string) {
 	for {
 		func() {
-			defer s.initWawit.Add(3)
 			conn, _, err := websocket.DefaultDialer.Dial(address, nil)
 			if err != nil {
 				// 连接失败, 5秒后重连
@@ -77,6 +76,7 @@ func (s *Server) Run(ctx context.Context, address string) {
 			go s.initProductListCache(ctx, client)
 			// 同步设备在线状态
 			go s.deviceOnlineStatusPush(ctx)
+			defer s.initWawit.Add(3)
 			err = client.Start(ctx)
 			if err != nil {
 				// 与服务器断开连接, 5秒后重连
