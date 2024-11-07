@@ -23,8 +23,8 @@ func (s *Server) initProductListCache(ctx context.Context, client *wrpc.Client) 
 }
 
 // 从服务器中请求设备列表
-func requestProductList(ctx context.Context, clinet *wrpc.Client) ([]ProductFull, error) {
-	var list []ProductFull
+func requestProductList(ctx context.Context, clinet *wrpc.Client) ([]Product, error) {
+	var list []Product
 	err := clinet.RequestAndUnmarshal(ctx, wrpc.RequestData{
 		Command: "getProductFullList",
 		Data:    nil,
@@ -35,7 +35,7 @@ func requestProductList(ctx context.Context, clinet *wrpc.Client) ([]ProductFull
 	return list, nil
 }
 
-func (s *Server) resetProductListCache(list []ProductFull) {
+func (s *Server) resetProductListCache(list []Product) {
 	s.productMapMutex.Lock()
 	defer s.productMapMutex.Unlock()
 
@@ -46,23 +46,23 @@ func (s *Server) resetProductListCache(list []ProductFull) {
 	}
 }
 
-func (s *Server) GetProducts() []ProductFull {
+func (s *Server) GetProducts() []Product {
 	s.initWawit.Wait()
 	return s.getProductListFromLocalCache()
 }
 
-func (s *Server) getProductListFromLocalCache() []ProductFull {
+func (s *Server) getProductListFromLocalCache() []Product {
 	s.productMapMutex.Lock()
 	defer s.productMapMutex.Unlock()
 
-	var result []ProductFull
+	var result []Product
 	for _, v := range s.productMap {
 		result = append(result, *v)
 	}
 	return result
 }
 
-func (s *Server) GetProduct(id string) *ProductFull {
+func (s *Server) GetProduct(id string) *Product {
 	s.initWawit.Wait()
 
 	s.productMapMutex.Lock()
