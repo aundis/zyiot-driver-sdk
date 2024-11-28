@@ -3,13 +3,13 @@ package zdk
 import "time"
 
 type DeviceOnlineMsg struct {
-	DeviceId string    `json:"deviceId"`
-	Time     time.Time `json:"time"`
+	DeviceIds []string  `json:"deviceIds"`
+	Time      time.Time `json:"time"`
 }
 
 type DeviceOfflineMsg struct {
-	DeviceId string    `json:"deviceId"`
-	Time     time.Time `json:"time"`
+	DeviceIds []string  `json:"deviceIds"`
+	Time      time.Time `json:"time"`
 }
 
 type DevicePropertiesReportMsg struct {

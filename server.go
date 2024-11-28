@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/aundis/wrpc"
+	"github.com/bep/debounce"
 	"github.com/gogf/gf/v2/container/glist"
 	"github.com/gogf/gf/v2/container/gmap"
 	"github.com/gogf/gf/v2/frame/g"
@@ -15,12 +16,16 @@ import (
 func NewServer() *Server {
 	server := &Server{
 		queue:                       glist.New(true),
+		onlineQueue:                 glist.New(true),
+		offlineQueue:                glist.New(true),
 		deviceMap:                   map[string]*Device{},
 		productMap:                  map[string]*Product{},
 		cond:                        sync.NewCond(new(sync.Mutex)),
 		deviceOnlineStatusMap:       gmap.NewStrIntMap(true),
 		serialNumberToDeviceIdMap:   gmap.NewStrStrMap(true),
 		productNumberToProductIdMap: gmap.NewStrStrMap(true),
+		onlineDebounce:              debounce.New(time.Second),
+		offlineDebounce:             debounce.New(time.Second),
 	}
 	server.initWawit.Add(3)
 	return server
@@ -29,6 +34,8 @@ func NewServer() *Server {
 type Server struct {
 	cond                        *sync.Cond
 	queue                       *glist.List
+	onlineQueue                 *glist.List
+	offlineQueue                *glist.List
 	clinet                      *wrpc.Client
 	mutex                       sync.Mutex
 	deviceMap                   map[string]*Device
@@ -40,6 +47,8 @@ type Server struct {
 	callDeviceActionHandler     CallDeviceActionHandler
 	setDevicePropertiesHandler  SetDevicePropertiesHandler
 	initWawit                   sync.WaitGroup
+	onlineDebounce              func(f func())
+	offlineDebounce             func(f func())
 }
 
 type CallDeviceActionHandler func(ctx context.Context, deviceId string, action string, args map[string]any) (any, error)

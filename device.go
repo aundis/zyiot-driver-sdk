@@ -72,21 +72,43 @@ func requestDevices(ctx context.Context, clinet *wrpc.Client) ([]Device, error) 
 }
 
 func (s *Server) OnlineDevice(deviceId string) {
+	s.onlineQueue.PushBack(deviceId)
+	s.onlineDebounce(s.delayOnlineDevice)
+}
+
+func (s *Server) delayOnlineDevice() {
 	defer s.cond.Broadcast()
+	// 从队列中提取上线设备
+	deviceIds := gconv.Strings(s.onlineQueue.PopBackAll())
+	// 加入上报队列
 	s.queue.PushBack(DeviceOnlineMsg{
-		DeviceId: deviceId,
-		Time:     time.Now(),
+		DeviceIds: deviceIds,
+		Time:      time.Now(),
 	})
-	s.deviceOnlineStatusMap.Set(deviceId, 1)
+	// 添加在线缓存
+	for _, deviceId := range deviceIds {
+		s.deviceOnlineStatusMap.Set(deviceId, 1)
+	}
 }
 
 func (s *Server) OfflineDevice(deviceId string) {
+	s.offlineQueue.PushBack(deviceId)
+	s.onlineDebounce(s.delayOfflineDevice)
+}
+
+func (s *Server) delayOfflineDevice() {
 	defer s.cond.Broadcast()
+	// 从队列中提取上线设备
+	deviceIds := gconv.Strings(s.onlineQueue.PopBackAll())
+	// 加入上报队列
 	s.queue.PushBack(DeviceOfflineMsg{
-		DeviceId: deviceId,
-		Time:     time.Now(),
+		DeviceIds: deviceIds,
+		Time:      time.Now(),
 	})
-	s.deviceOnlineStatusMap.Set(deviceId, 0)
+	// 添加离线缓存
+	for _, deviceId := range deviceIds {
+		s.deviceOnlineStatusMap.Set(deviceId, 0)
+	}
 }
 
 func (s *Server) ReportDeviceProperties(deviceId string, data map[string]any) {
