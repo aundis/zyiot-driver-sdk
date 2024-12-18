@@ -26,7 +26,7 @@ func (s *Server) initProductListCache(ctx context.Context, client *wrpc.Client) 
 func requestProductList(ctx context.Context, clinet *wrpc.Client) ([]Product, error) {
 	var list []Product
 	err := clinet.RequestAndUnmarshal(ctx, wrpc.RequestData{
-		Command: "getProductFullList",
+		Command: "getProductList",
 		Data:    nil,
 	}, &list)
 	if err != nil {
