@@ -2,6 +2,7 @@ package zdk
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -54,10 +55,18 @@ type Server struct {
 type CallDeviceActionHandler func(ctx context.Context, deviceId string, action string, args map[string]any) (any, error)
 type SetDevicePropertiesHandler func(ctx context.Context, deviceId string, values map[string]any) error
 
-func (s *Server) Run(ctx context.Context, address string) {
+type RunOption struct {
+	Address string
+	Name    string
+	Token   string
+}
+
+func (s *Server) Run(ctx context.Context, option RunOption) {
+	url := fmt.Sprintf(`ws://%s/admin/objectql/once?call=driver.login&args={"name":"%s"}&QTOKEN=%s`, option.Address, option.Name, option.Token)
+
 	for {
 		func() {
-			conn, _, err := websocket.DefaultDialer.Dial(address, nil)
+			conn, _, err := websocket.DefaultDialer.Dial(url, nil)
 			if err != nil {
 				// 连接失败, 5秒后重连
 				g.Log().Error(ctx, "websocket dial error: ", err)
