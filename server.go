@@ -23,7 +23,6 @@ func NewServer() *Server {
 		productMap:                  map[string]*Product{},
 		cond:                        sync.NewCond(new(sync.Mutex)),
 		deviceOnlineStatusMap:       gmap.NewStrIntMap(true),
-		serialNumberToDeviceIdMap:   gmap.NewStrStrMap(true),
 		productNumberToProductIdMap: gmap.NewStrStrMap(true),
 		onlineDebounce:              debounce.New(time.Second),
 		offlineDebounce:             debounce.New(time.Second),
@@ -43,7 +42,6 @@ type Server struct {
 	productMapMutex             sync.Mutex
 	productMap                  map[string]*Product
 	deviceOnlineStatusMap       *gmap.StrIntMap
-	serialNumberToDeviceIdMap   *gmap.StrStrMap
 	productNumberToProductIdMap *gmap.StrStrMap
 	callDeviceActionHandler     CallDeviceActionHandler
 	setDevicePropertiesHandler  SetDevicePropertiesHandler
@@ -157,7 +155,6 @@ func (s *Server) messageQueueMain(ctx context.Context, client *wrpc.Client) {
 }
 
 type productCreatedReq struct {
-	Id       string        `json:"_id"`      // 主键
 	Name     string        `json:"name"`     // 名字
 	Number   string        `json:"number"`   // 产品标识
 	Protocol string        `json:"protocol"` // 协议
@@ -169,21 +166,18 @@ func (s *Server) onProductCreated(ctx context.Context, req *productCreatedReq) e
 	s.productMapMutex.Lock()
 	defer s.productMapMutex.Unlock()
 
-	s.productMap[req.Id] = &Product{
-		Id:       req.Id,
+	s.productMap[req.Number] = &Product{
 		Name:     req.Name,
 		Number:   req.Number,
 		Protocol: req.Protocol,
 		Status:   req.Status,
 		Comment:  req.Comment,
 	}
-	s.serialNumberToDeviceIdMap.Set(req.Number, req.Id)
 	g.Log().Infof(ctx, "on product created %v", req)
 	return nil
 }
 
 type productUpdatedReq struct {
-	Id       string        `json:"_id"`      // 主键
 	Name     string        `json:"name"`     // 名字
 	Number   string        `json:"number"`   // 产品标识
 	Protocol string        `json:"protocol"` // 协议
@@ -195,28 +189,26 @@ func (s *Server) onProductUpdated(ctx context.Context, req *productUpdatedReq) e
 	s.productMapMutex.Lock()
 	defer s.productMapMutex.Unlock()
 
-	s.productMap[req.Id] = &Product{
-		Id:       req.Id,
+	s.productMap[req.Number] = &Product{
 		Name:     req.Name,
 		Number:   req.Number,
 		Protocol: req.Protocol,
 		Status:   req.Status,
 		Comment:  req.Comment,
 	}
-	s.productNumberToProductIdMap.Set(req.Number, req.Id)
 	g.Log().Infof(ctx, "on product updated %v", req)
 	return nil
 }
 
 type productDeletedReq struct {
-	ProductId string `json:"productId"`
+	Number string `json:"number" v:"required"`
 }
 
 func (s *Server) onProductDeleted(ctx context.Context, req *productDeletedReq) error {
 	s.productMapMutex.Lock()
 	defer s.productMapMutex.Unlock()
 
-	delete(s.productMap, req.ProductId)
+	delete(s.productMap, req.Number)
 	// TODO: clear serial number to device id map
 	g.Log().Infof(ctx, "on product deleted %v", req)
 	return nil

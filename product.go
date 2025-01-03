@@ -27,7 +27,11 @@ func requestProductList(ctx context.Context, clinet *wrpc.Client) ([]Product, er
 	var list []Product
 	err := clinet.RequestAndUnmarshal(ctx, wrpc.RequestData{
 		Command: "getProductList",
-		Data:    nil,
+		Data: map[string]any{
+			"filter": map[string]any{
+				"status": "已发布",
+			},
+		},
 	}, &list)
 	if err != nil {
 		return nil, err
@@ -41,8 +45,8 @@ func (s *Server) resetProductListCache(list []Product) {
 
 	for _, item := range list {
 		temp := item
-		s.productMap[item.Id] = &temp
-		s.productNumberToProductIdMap.Set(item.Number, item.Id)
+		s.productMap[item.Number] = &temp
+		s.productNumberToProductIdMap.Set(item.Number, item.Number)
 	}
 }
 
@@ -69,4 +73,12 @@ func (s *Server) GetProduct(id string) *Product {
 	defer s.productMapMutex.Unlock()
 
 	return s.productMap[id]
+}
+
+func (s *Server) IsExists(number string) bool {
+	s.productMapMutex.Lock()
+	defer s.productMapMutex.Unlock()
+	// 从map中判断
+	_, ok := s.productMap[number]
+	return ok
 }
