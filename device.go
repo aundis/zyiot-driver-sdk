@@ -120,18 +120,15 @@ func (s *Server) ReportDeviceProperties(number string, data map[string]any) {
 	})
 }
 
-func (s *Server) CreateDevice(ctx context.Context, in CreateDeviceReq) (string, error) {
+func (s *Server) CreateDevice(ctx context.Context, in CreateDeviceReq) error {
 	// 等待上线不然 client = nil, 无法请求
 	s.WaitInit()
 
-	res, err := s.clinet.Request(ctx, wrpc.RequestData{
+	_, err := s.clinet.Request(ctx, wrpc.RequestData{
 		Command: "createDevice",
 		Data:    in,
 	})
-	if err != nil {
-		return "", err
-	}
-	return gconv.String(res), nil
+	return err
 }
 
 // 从缓存中获取数据
