@@ -75,6 +75,10 @@ func (s *Server) GetProduct(number string) *Product {
 	return s.productMap[number]
 }
 
+func (s *Server) IsProductExists(number string) bool {
+	return s.GetProduct(number) != nil
+}
+
 func (s *Server) IsExists(number string) bool {
 	s.productMapMutex.Lock()
 	defer s.productMapMutex.Unlock()
