@@ -66,13 +66,13 @@ func (s *Server) getProductListFromLocalCache() []Product {
 	return result
 }
 
-func (s *Server) GetProduct(id string) *Product {
+func (s *Server) GetProduct(number string) *Product {
 	s.initWawit.Wait()
 
 	s.productMapMutex.Lock()
 	defer s.productMapMutex.Unlock()
 
-	return s.productMap[id]
+	return s.productMap[number]
 }
 
 func (s *Server) IsExists(number string) bool {

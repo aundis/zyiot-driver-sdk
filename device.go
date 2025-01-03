@@ -213,16 +213,16 @@ func (s *Server) onDeviceDeleted(ctx context.Context, req *deviceDeletedReq) err
 }
 
 type callDeviceActionReq struct {
-	DeviceId string         `json:"deviceId"`
-	Action   string         `json:"action"`
-	Args     map[string]any `json:"args"`
+	Number string         `json:"number"`
+	Action string         `json:"action"`
+	Args   map[string]any `json:"args"`
 }
 
 func (s *Server) onCallDeviceAction(ctx context.Context, req *callDeviceActionReq) (interface{}, error) {
 	if s.callDeviceActionHandler == nil {
 		return nil, gerror.New("driver not impl call device action")
 	}
-	return s.callDeviceActionHandler(ctx, req.DeviceId, req.Action, req.Args)
+	return s.callDeviceActionHandler(ctx, req.Number, req.Action, req.Args)
 }
 
 func (s *Server) SetCallDeviceActionHandler(handler CallDeviceActionHandler) {
@@ -230,15 +230,15 @@ func (s *Server) SetCallDeviceActionHandler(handler CallDeviceActionHandler) {
 }
 
 type setDevicePropertiesReq struct {
-	DeviceId string         `json:"deviceId"`
-	Values   map[string]any `json:"values"`
+	Number string         `json:"number"`
+	Values map[string]any `json:"values"`
 }
 
 func (s *Server) onSetDeviceProperties(ctx context.Context, req *setDevicePropertiesReq) error {
 	if s.setDevicePropertiesHandler == nil {
 		return gerror.New("driver not impl set device properties")
 	}
-	return s.setDevicePropertiesHandler(ctx, req.DeviceId, req.Values)
+	return s.setDevicePropertiesHandler(ctx, req.Number, req.Values)
 }
 
 func (s *Server) SetSetDevicePropertiesHandler(handler SetDevicePropertiesHandler) {
