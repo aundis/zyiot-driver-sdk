@@ -92,12 +92,12 @@ func (s *Server) delayOnlineDevice() {
 
 func (s *Server) OfflineDevice(deviceId string) {
 	s.offlineQueue.PushBack(deviceId)
-	s.onlineDebounce(s.delayOfflineDevice)
+	s.offlineDebounce(s.delayOfflineDevice)
 }
 
 func (s *Server) delayOfflineDevice() {
 	defer s.cond.Broadcast()
-	// 从队列中提取上线设备
+	// 从队列中提取下线设备
 	deviceNumbers := gconv.Strings(s.offlineQueue.PopBackAll())
 	// 加入上报队列
 	s.queue.PushBack(DeviceOfflineMsg{
@@ -194,6 +194,13 @@ func (s *Server) onDeviceUpdated(ctx context.Context, req *deviceUpdatedReq) err
 		Status:        string(req.Status),
 		Comment:       req.Comment,
 	}
+	// 同步本地设备在线状态
+	if req.Status == DeviceStatusOnline {
+		s.deviceOnlineStatusMap.Set(req.Number, 1)
+	} else {
+		s.deviceOnlineStatusMap.Set(req.Number, 0)
+	}
+
 	g.Log().Infof(ctx, "on device updated %v", req)
 	return nil
 }
@@ -206,7 +213,11 @@ func (s *Server) onDeviceDeleted(ctx context.Context, req *deviceDeletedReq) err
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	delete(s.deviceMap, req.DeviceId)
+	device := s.deviceMap[req.DeviceId]
+	if device != nil {
+		delete(s.deviceMap, req.DeviceId)
+		s.deviceOnlineStatusMap.Remove(device.Number)
+	}
 	// TODO: clear serial number to device id map
 	g.Log().Infof(ctx, "on device deleted %v", req)
 	return nil
