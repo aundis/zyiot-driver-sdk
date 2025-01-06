@@ -257,7 +257,7 @@ func (s *Server) SetSetDevicePropertiesHandler(handler SetDevicePropertiesHandle
 }
 
 func (s *Server) IsDeviceOnline(number string) bool {
-	return s.deviceOnlineStatusMap.Contains(number)
+	return s.deviceOnlineStatusMap.Get(number) == 1
 }
 
 func (s *Server) IsDeviceExists(number string) bool {
