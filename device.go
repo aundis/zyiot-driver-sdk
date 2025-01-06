@@ -206,16 +206,16 @@ func (s *Server) onDeviceUpdated(ctx context.Context, req *deviceUpdatedReq) err
 }
 
 type deviceDeletedReq struct {
-	DeviceId string `json:"deviceId"`
+	Number string `json:"number"`
 }
 
 func (s *Server) onDeviceDeleted(ctx context.Context, req *deviceDeletedReq) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	device := s.deviceMap[req.DeviceId]
+	device := s.deviceMap[req.Number]
 	if device != nil {
-		delete(s.deviceMap, req.DeviceId)
+		delete(s.deviceMap, req.Number)
 		s.deviceOnlineStatusMap.Remove(device.Number)
 	}
 	// TODO: clear serial number to device id map
