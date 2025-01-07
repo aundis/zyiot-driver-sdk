@@ -267,3 +267,16 @@ func (s *Server) IsDeviceExists(number string) bool {
 	_, ok := s.deviceMap[number]
 	return ok
 }
+
+func (s *Server) GetCurrentDriverDevices() []*Device {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	var result []*Device
+	for _, device := range s.deviceMap {
+		if device.DriverName == s.name {
+			result = append(result, device)
+		}
+	}
+	return result
+}

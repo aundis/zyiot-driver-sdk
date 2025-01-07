@@ -32,6 +32,7 @@ func NewServer() *Server {
 }
 
 type Server struct {
+	name                        string
 	cond                        *sync.Cond
 	queue                       *glist.List
 	onlineQueue                 *glist.List
@@ -60,6 +61,7 @@ type RunOption struct {
 }
 
 func (s *Server) Run(ctx context.Context, option RunOption) {
+	s.name = option.Name
 	url := fmt.Sprintf(`ws://%s/admin/objectql/once?call=driver.login&args={"name":"%s"}&QTOKEN=%s`, option.Address, option.Name, option.Token)
 
 	for {
