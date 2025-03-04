@@ -26,13 +26,13 @@ func (s *Server) updateCacheDeviceList(ctx context.Context, client *wrpc.Client)
 
 func (s *Server) deviceOnlineStatusPush(ctx context.Context) {
 	defer s.initWawit.Done()
-	for deviceId, status := range s.deviceOnlineStatusMap.Map() {
+	for deviceNumber, status := range s.selfDeviceOnlineStatusMap.Map() {
 		if status == 1 {
-			s.OnlineDevice(deviceId)
-			g.Log().Infof(ctx, "sync device %s online status to server", deviceId)
+			s.OnlineDevice(deviceNumber)
+			g.Log().Infof(ctx, "sync device %s online status to server", deviceNumber)
 		} else {
-			s.OfflineDevice(deviceId)
-			g.Log().Infof(ctx, "sync device %s offline status to server", deviceId)
+			s.OfflineDevice(deviceNumber)
+			g.Log().Infof(ctx, "sync device %s offline status to server", deviceNumber)
 		}
 	}
 }
@@ -70,8 +70,9 @@ func requestDevices(ctx context.Context, clinet *wrpc.Client) ([]Device, error) 
 	return list, nil
 }
 
-func (s *Server) OnlineDevice(deviceId string) {
-	s.onlineQueue.PushBack(deviceId)
+func (s *Server) OnlineDevice(deviceNumber string) {
+	s.selfDeviceOnlineStatusMap.Set(deviceNumber, 1)
+	s.onlineQueue.PushBack(deviceNumber)
 	s.onlineDebounce(s.delayOnlineDevice)
 }
 
@@ -84,14 +85,11 @@ func (s *Server) delayOnlineDevice() {
 		Numbers: deviceNumbers,
 		Time:    time.Now(),
 	})
-	// 添加在线缓存
-	for _, number := range deviceNumbers {
-		s.deviceOnlineStatusMap.Set(number, 1)
-	}
 }
 
-func (s *Server) OfflineDevice(deviceId string) {
-	s.offlineQueue.PushBack(deviceId)
+func (s *Server) OfflineDevice(deviceNumber string) {
+	s.selfDeviceOnlineStatusMap.Set(deviceNumber, 0)
+	s.offlineQueue.PushBack(deviceNumber)
 	s.offlineDebounce(s.delayOfflineDevice)
 }
 
@@ -104,10 +102,6 @@ func (s *Server) delayOfflineDevice() {
 		Numbers: deviceNumbers,
 		Time:    time.Now(),
 	})
-	// 添加离线缓存
-	for _, number := range deviceNumbers {
-		s.deviceOnlineStatusMap.Set(number, 0)
-	}
 }
 
 func (s *Server) ReportDeviceProperties(number string, data map[string]any) {

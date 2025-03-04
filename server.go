@@ -23,6 +23,7 @@ func NewServer() *Server {
 		productMap:                  map[string]*Product{},
 		cond:                        sync.NewCond(new(sync.Mutex)),
 		deviceOnlineStatusMap:       gmap.NewStrIntMap(true),
+		selfDeviceOnlineStatusMap:   gmap.NewStrIntMap(true),
 		productNumberToProductIdMap: gmap.NewStrStrMap(true),
 		onlineDebounce:              debounce.New(time.Second),
 		offlineDebounce:             debounce.New(time.Second),
@@ -43,6 +44,7 @@ type Server struct {
 	productMapMutex             sync.Mutex
 	productMap                  map[string]*Product
 	deviceOnlineStatusMap       *gmap.StrIntMap
+	selfDeviceOnlineStatusMap   *gmap.StrIntMap // 用来重连后同步本设备的在线状态
 	productNumberToProductIdMap *gmap.StrStrMap
 	callDeviceActionHandler     CallDeviceActionHandler
 	setDevicePropertiesHandler  SetDevicePropertiesHandler
