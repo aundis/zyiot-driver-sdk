@@ -21,6 +21,8 @@ func (s *Server) updateCacheDeviceList(ctx context.Context, client *wrpc.Client)
 
 	g.Log().Infof(ctx, "get device list success %v", list)
 	s.appendDeviceListToLocalCache(list)
+	// 同步全局设备的在线状态
+	s.syncDeviceOnlineStatusToLocal(list)
 	return nil
 }
 
@@ -34,6 +36,19 @@ func (s *Server) deviceOnlineStatusPush(ctx context.Context) {
 			s.OfflineDevice(deviceNumber)
 			g.Log().Infof(ctx, "sync device %s offline status to server", deviceNumber)
 		}
+	}
+}
+
+func (s *Server) syncDeviceOnlineStatusToLocal(list []Device) {
+	s.deviceOnlineStatusMap.Clear()
+	for _, item := range list {
+		onlineStatus := 0
+		if item.Status == string(DeviceStatusOnline) {
+			onlineStatus = 1
+		} else {
+			onlineStatus = 0
+		}
+		s.deviceOnlineStatusMap.Set(item.Number, onlineStatus)
 	}
 }
 
